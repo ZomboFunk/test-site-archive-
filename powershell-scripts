@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Powershell</title>
+  </head>
+  <body>
+    <header>
+    <nav>
+      <a href="index.html">Home</a><a href="about-me.html">About Me</a><a href="powershell-scripts.html">PowerShell Scripts</a>
+    </nav>
+    </<header>
+
+  <h1>PowerShell script to find a phrase in Word Documents.</h1>
+  <p> A lot of organizations nowadays automate the OPORD process to some extent, often at least by using workflows to identify sections/or units assigned in each order and notify you only when you're been designated as "assigned". Unfortunately, some do not automate the process at all. In those, you have to read through everyorder and find out if it's even applicable. A lot of us know the feeling of skipping immediately down to the "Tasks to Subordinate Units:" Section before reading anything at all. Today I found myself in that situation for a large number of orders and I thought, "Not today. There has got to be a way to automate this process!"
+  And I'm sure there are a lot. I like PowerShell so I wanted to use that. Unfortunately the "select-string" function doesn't work on .doc or .docx file types, so I wasted a few hours reading script that are way to complicated for me before I just decided to convert everything to .txt, which is pretty simple. After that it was just a matter of looking through the files for an appropriate string. Unfortunately there's no standardaization in unit spelling (302d vs 302nd vs 302). Turns out you can set select-string to display a given number of lines before and after a phrase. Knowing that it's just a matter of searching "Tasks to Staff:". The script then shows what each order says, and you only need to read through a few lines to determine which orders are worth investigating.
+  </p>
+  <h3> Here's the script!</h3>
+  <code>
+  ##This let's you choose what directory you want to convert .doc files into .txt file in. (it's going to save all of the .doc folders in sub-directories in the main directory and save that as a value for later use)
+
+#Provide user input option for document path (OMIT trailing "\")
+
+$docPath = Read-Host "Path to documents?"
+
+#Get the files in this path that are word docs.
+
+$files = Get-ChildItem $docPath -filter "*.doc"
+
+#Change the save format
+
+$saveFormat = [Enum]::Parse([Microsoft.Office.Interop.Word.WdSaveFormat], "wdFormatText")
+
+#instantiate the com object for word into a variable for control
+
+$word = new-object -comobject word.application
+
+#Time to process the files...
+
+foreach ($file in $files) {
+
+    #Write the output, change file name, and wrap up.
+
+    Write-Output "Processing: $($file.FullName)"
+    $doc = $word.Documents.Open($file.FullName)
+    $fileName = $file.BaseName + '.txt'
+    $doc.SaveAs("$docpath\$fileName",[ref]$saveFormat)
+    Write-Output "File saved as $docPath\$fileName"
+    $doc.Close()
+
+}
+
+$word.Quit()
+
+
+##This portion will search all files in the directory named for the string desired (I.E. Tasks to Staff)
+$txttofind = Read-Host "Text to find?"
+Get-ChildItem -recurse -filter *.txt -path $docPath | Select-String -pattern -context 0,1 $txttofind | format-table
+</code>
+
+  <article class="">
+  <h2>I'm working on this page as part of an attempt to learn Web-Development.</h2>
+  <p>If you have an interest in Web Development I strongly recommend checking out some of these resources!</p>
+  <ul>
+    <li><a href="https://w3cx.org/">W3CX.org</a></li>
+    <li><a href="https://www.pce.uw.edu/Overview/Prog/6390">UW Front End Web Development</a></li>
+  </ul>
+  </article>
+
+    <footer>This page is under development as an ongoing effort to learn web development concepts. If you have questions about the content displayed here please contact me via <a href="mailto:cjtuck@uw.edu"> e-mail</a></footer>
+    
+  </body>
+</html>
